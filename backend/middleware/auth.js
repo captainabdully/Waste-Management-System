@@ -22,3 +22,5 @@ export const isAdmin = async (req, res, next) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+export default { isAdmin };

@@ -4,7 +4,7 @@ import { sql } from './config/db.js';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 const swaggerDocument = YAML.load('./swagger.yaml');
-import { isAdmin } from "./middleware/isAdmin.js";
+import { isAdmin } from "./middleware/auth.js";
 import rateLimitMiddleware from './config/upstash.js';
 
 
