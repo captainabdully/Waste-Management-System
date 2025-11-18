@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import droppingPointController from '../controllers/droppingPointController.js';
+import { isAdmin } from '../middleware/auth.js';
+
 const router = express.Router();
-const droppingPointController = require('../controllers/droppingPointController');
-const { isAdmin } = require('../middleware/auth');
 
 router.post('/', isAdmin, droppingPointController.createDroppingPoint);
 router.get('/', droppingPointController.getAllDroppingPoints);
@@ -9,4 +10,4 @@ router.get('/:id', droppingPointController.getDroppingPointById);
 router.put('/:id', isAdmin, droppingPointController.updateDroppingPoint);
 router.delete('/:id', isAdmin, droppingPointController.deleteDroppingPoint);
 
-module.exports = router;
+export default router;

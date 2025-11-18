@@ -1,4 +1,4 @@
-const priceService = require('../services/priceService');
+import priceService from '../services/priceService.js';
 
 class PriceController {
   async createDailyPrice(req, res) {
@@ -47,4 +47,4 @@ class PriceController {
   }
 }
 
-module.exports = new PriceController();
+export default new PriceController();

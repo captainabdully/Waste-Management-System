@@ -1,4 +1,4 @@
-const orderService = require('../services/orderService');
+import orderService from '../services/orderService.js';
 
 class OrderController {
   async createPickupOrder(req, res) {
@@ -92,4 +92,4 @@ class OrderController {
   }
 }
 
-module.exports = new OrderController();
+export default new OrderController();

@@ -1,4 +1,4 @@
-const droppingPointService = require('../services/droppingPointService');
+import droppingPointService from '../services/droppingPointService.js';
 
 class DroppingPointController {
   async createDroppingPoint(req, res) {
@@ -98,4 +98,4 @@ class DroppingPointController {
   }
 }
 
-module.exports = new DroppingPointController();
+export default new DroppingPointController();

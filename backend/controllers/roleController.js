@@ -1,4 +1,4 @@
-const roleService = require('../services/roleService');
+import roleService from '../services/roleService.js';
 
 class RoleController {
   async createUserRole(req, res) {
@@ -82,4 +82,4 @@ class RoleController {
   }
 }
 
-module.exports = new RoleController();
+export default new RoleController();

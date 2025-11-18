@@ -1,9 +1,9 @@
-const userService = require('../services/userService');
+import userService from '../services/userService.js';
 
 class UserController {
   async createUser(req, res) {
     try {
-      const { user_id, name, email, phone_number } = req.body;
+      const { user_id, name, email } = req.body;
       
       if (!user_id || !name || !email) {
         return res.status(400).json({ message: "user_id, name, and email are required" });
@@ -123,4 +123,4 @@ class UserController {
   }
 }
 
-module.exports = new UserController();
+export default new UserController();
