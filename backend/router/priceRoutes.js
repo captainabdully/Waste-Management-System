@@ -1,9 +1,9 @@
-import express from 'express';
-import { createDroppingPoint, getAllDroppingPoints } from '../controllers/droppingPointController.js';  
-import rateLimitMiddleware from '../middleware/rateLimiter.js';
+const express = require('express');
+const router = express.Router();
+const priceController = require('../controllers/priceController');
 
-const router = express.Router();    
-router.post('/dropping-points', rateLimitMiddleware, createDroppingPoint);
-router.get('/dropping-points', rateLimitMiddleware, getAllDroppingPoints);
+router.post('/', priceController.createDailyPrice);
+router.get('/today', priceController.getAllTodayPrices);
+router.get('/today/:dropping_point_id', priceController.getTodayPricesByDroppingPoint);
 
-export default router;
+module.exports = router;
