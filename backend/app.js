@@ -11,7 +11,7 @@ import priceRoutes from './routes/priceRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 
 // Import middleware
-import { isAdmin } from './middleware/auth.js';
+import { isAdmin } from './middleware/isAdmin.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;

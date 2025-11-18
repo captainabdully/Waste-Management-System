@@ -1,10 +1,10 @@
 import { sql } from '../config/db.js';
 
 class DroppingPointService {
-  async createDroppingPoint(location_name, created_by) {
+  async createDroppingPoint(location_name, user_id) {
     const newPoint = await sql`
       INSERT INTO dropping_point (location_name, created_by)
-      VALUES (${location_name}, ${created_by})
+      VALUES (${location_name}, ${user_id})
       RETURNING *
     `;
     
