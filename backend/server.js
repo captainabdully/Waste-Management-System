@@ -137,50 +137,7 @@ async function initDB(){
   }
 }
 
-// app.listen(PORT,()=>{
-//     console.log("Country server is running on port ",PORT);
-// });
-//first api to create dropping_point (data insertion)
 
-// Dropping Point Endpoints (Fixed)
-// app.post("/api/dropping-point", async(req, res) => {
-//     try {
-//         const { location_name, address, created_by } = req.body; 
-        
-//         if (!location_name || !created_by) {
-//             return res.status(400).json({ message: "Location name and created_by are required" });
-//         }
-        
-//         await sql`
-//             INSERT INTO dropping_point (location_name, address, created_by) 
-//             VALUES (${location_name}, ${address}, ${created_by})
-//             RETURNING *
-//         `;
-//         res.status(201).json({ message: "Dropping point created successfully" });
-
-//     } catch (error) { 
-//         console.error("Error creating dropping point:", error);
-//         res.status(500).json({ message: "Internal server error" });
-//     }  
-// });
-
-// app.get("/api/dropping-points", async (req, res) => {
-//     try {
-//         const points = await sql`
-//             SELECT dp.*, u.name as created_by_name 
-//             FROM dropping_point dp
-//             LEFT JOIN users u ON dp.created_by = u.user_id
-//             ORDER BY dp.created_at DESC
-//         `;  
-//         res.status(200).json({
-//             message: "Dropping points fetched successfully",
-//             data: points
-//         }); 
-//     } catch (error) {
-//         console.error("Error fetching dropping points:", error);
-//         res.status(500).json({ message: "Internal server error" });
-//     }
-// });
 
 // User Roles Endpoints (Fixed)
 app.post("/api/user-roles", async(req, res) => {
@@ -223,7 +180,6 @@ app.get("/api/user-roles", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 // Get user with roles
 app.get("/api/users-with-roles/:user_id", async (req, res) => {
@@ -312,7 +268,6 @@ app.delete("/api/user-roles/:user_id", async (req, res) => {
   }
 });
 
-
 // Daily Price Endpoints (Fixed)
 app.post("/api/daily-price", async(req, res) => {
     try {
@@ -394,7 +349,6 @@ app.post("/api/dropping-point", isAdmin, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 app.get("/api/dropping-point", async (req, res) => {
   try {
@@ -493,7 +447,6 @@ app.delete("/api/dropping-point/:id", isAdmin, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 // Get today's prices for all dropping points
 app.get("/api/today-prices", async (req, res) => {
@@ -769,3 +722,49 @@ initDB().then(()=>{
         console.log("Country server is running on port ",PORT);
     });
 });
+
+
+// app.listen(PORT,()=>{
+//     console.log("Country server is running on port ",PORT);
+// });
+//first api to create dropping_point (data insertion)
+
+// Dropping Point Endpoints (Fixed)
+// app.post("/api/dropping-point", async(req, res) => {
+//     try {
+//         const { location_name, address, created_by } = req.body; 
+        
+//         if (!location_name || !created_by) {
+//             return res.status(400).json({ message: "Location name and created_by are required" });
+//         }
+        
+//         await sql`
+//             INSERT INTO dropping_point (location_name, address, created_by) 
+//             VALUES (${location_name}, ${address}, ${created_by})
+//             RETURNING *
+//         `;
+//         res.status(201).json({ message: "Dropping point created successfully" });
+
+//     } catch (error) { 
+//         console.error("Error creating dropping point:", error);
+//         res.status(500).json({ message: "Internal server error" });
+//     }  
+// });
+
+// app.get("/api/dropping-points", async (req, res) => {
+//     try {
+//         const points = await sql`
+//             SELECT dp.*, u.name as created_by_name 
+//             FROM dropping_point dp
+//             LEFT JOIN users u ON dp.created_by = u.user_id
+//             ORDER BY dp.created_at DESC
+//         `;  
+//         res.status(200).json({
+//             message: "Dropping points fetched successfully",
+//             data: points
+//         }); 
+//     } catch (error) {
+//         console.error("Error fetching dropping points:", error);
+//         res.status(500).json({ message: "Internal server error" });
+//     }
+// });
