@@ -27,9 +27,8 @@ class PriceService {
       ORDER BY 
         CASE dp.category
           WHEN 'heavy' THEN 1
-          WHEN 'mixer' THEN 2
-          WHEN 'light' THEN 3
-          WHEN 'cast' THEN 4
+          WHEN 'light' THEN 2
+          WHEN 'cast' THEN 3
         END
     `;
   }
