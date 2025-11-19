@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 // import swaggerUi from 'swagger-ui-express';
 import { initDB } from './config/db.js';
+// import { verifyToken } from "../middleware/verifyToken.js";
 
 // Import routes
 import userRoutes from './routes/userRoutes.js';
@@ -29,6 +30,8 @@ app.use('/api/user-roles', roleRoutes);
 app.use('/api/dropping-point', droppingPointRoutes);
 app.use('/api/daily-price', priceRoutes);
 app.use('/api/pickup-order', orderRoutes);
+
+
 
 // Root route
 app.get('/', (req, res) => {

@@ -1,19 +1,24 @@
-import e from "express";
+// middleware/isAdmin.js
 
+import { sql }  from "../config/db.js";  // <-- 1. FIXED: import sql
 
 export const isAdmin = async (req, res, next) => {
     try {
         const userId = req.user?.user_id;
 
         if (!userId) {
-            return res.status(401).json({ message: "Unauthorized. Missing user ID!!!" });
+            return res.status(401).json({ message: "Unauthorized. Missing user ID!" });
         }
 
+        // Query actual role
         const roleResult = await sql`
-            SELECT role FROM user_roles WHERE user_id = ${userId}
+            SELECT role_category AS role
+            FROM user_roles
+            WHERE user_id = ${userId}
         `;
 
-        if (roleResult.count === 0) {
+        // FIXED: roleResult.length (not .count)
+        if (roleResult.length === 0) {
             return res.status(403).json({ message: "Access denied. Role not found." });
         }
 
@@ -29,5 +34,3 @@ export const isAdmin = async (req, res, next) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
-
-export default { isAdmin };
