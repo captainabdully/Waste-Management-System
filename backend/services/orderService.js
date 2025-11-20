@@ -64,6 +64,42 @@ class OrderService {
     
     return result[0];
   }
+  async getOrderById(id) {
+    const order = await sql`
+      SELECT 
+        po.*, 
+        dp.location_name,
+        v.name as vendor_name,
+        m.name as assigned_manager_name
+      FROM pickup_order po
+      LEFT JOIN dropping_point dp ON po.dropping_point_id = dp.id
+      LEFT JOIN users v ON po.vendor_id = v.user_id
+      LEFT JOIN users m ON po.assigned_to = m.user_id
+      WHERE po.id = ${id}
+    `;
+
+    return order[0];
+  }
+
+async getOrderHistory({ vendor_id, status, start_date, end_date, dropping_point_id }) {
+  return await sql`
+    SELECT 
+      o.*,
+      dp.location_name,
+      dp.address,
+      u.name AS vendor_name
+    FROM pickup_order o
+    LEFT JOIN dropping_point dp ON dp.id = o.dropping_point_id
+    LEFT JOIN users u ON u.user_id = o.vendor_id
+    WHERE 
+      (${vendor_id}::text IS NULL OR o.vendor_id = ${vendor_id}) AND
+      (${status}::text IS NULL OR o.status = ${status}) AND
+      (${dropping_point_id}::int IS NULL OR o.dropping_point_id = ${dropping_point_id}) AND
+      (${start_date}::date IS NULL OR o.created_at::date >= ${start_date}) AND
+      (${end_date}::date IS NULL OR o.created_at::date <= ${end_date})
+    ORDER BY o.created_at DESC;
+  `;
+}
 }
 
 export default new OrderService();

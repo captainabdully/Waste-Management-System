@@ -49,6 +49,20 @@ class OrderController {
     }
   }
 
+  async getOrderById(req, res) {
+    try {
+      const { id } = req.params;
+      const order = await orderService.getOrderById(id);
+      
+      if (!order) {
+        return res.status(404).json({ message: "Pickup order not found" });
+      } 
+      res.status(200).json({ data: order });
+    } catch (error) { 
+      console.error("Error fetching pickup order:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
   async updateOrderStatus(req, res) {
     try {
       const { id } = req.params;
@@ -90,6 +104,31 @@ class OrderController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  async getOrderHistory(req, res) {
+  try {
+    const { vendor_id, status, start_date, end_date, dropping_point_id } = req.query;
+
+    const data = await orderService.getOrderHistory({
+      vendor_id,
+      status,
+      start_date,
+      end_date,
+      dropping_point_id
+    });
+
+    res.status(200).json({
+      message: "Order history fetched successfully",
+      data
+    });
+
+  } catch (error) {
+    console.error("Error fetching order history:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 }
+
+}
+
 
 export default new OrderController();
