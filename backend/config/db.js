@@ -1,5 +1,6 @@
 import {neon} from '@neondatabase/serverless';
 import "dotenv/config";
+// import jwt from "jsonwebtoken";
 
 // Creates a SQL connection using our DB URL from .env file
 export const sql = neon(process.env.DATABASE_URL);

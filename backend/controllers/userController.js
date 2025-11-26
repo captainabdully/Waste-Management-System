@@ -1,126 +1,192 @@
-import userService from '../services/userService.js';
+import { sql } from "../config/db.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-class UserController {
-  async createUser(req, res) {
-    try {
-      const { user_id, name, email } = req.body;
-      
-      if (!user_id || !name || !email) {
-        return res.status(400).json({ message: "user_id, name, and email are required" });
-      }
 
-      const newUser = await userService.createUser(req.body);
-      
-      res.status(201).json({
-        message: "User created successfully",
-        data: newUser
-      });
-    } catch (error) {
-      console.error("Error creating user:", error);
-      if (error.message.includes('already exists')) {
-        return res.status(409).json({ message: error.message });
-      }
-      res.status(500).json({ message: "Internal server error" });
-    }
+
+
+
+// CREATE USER
+export const createUser = async (req, res) => {
+  try {
+    const { name, email, password, role, user_category } = req.body;
+
+    const [exist] = await sql.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+
+    if (exist.length > 0)
+      return res.status(400).json({ message: "Email already exists" });
+
+    const hashed = bcrypt.hashSync(password, 10);
+
+    const [result] = await sql.query(
+      `INSERT INTO users (name, email, password, role, user_category)
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, email, hashed, role, user_category]
+    );
+
+    res.status(201).json({
+      message: "User created successfully",
+      user_id: result.insertId,
+    });
+  } catch (error) {
+    console.error("Create user error:", error);
+    res.status(500).json({ message: "Server error" });
   }
+};
 
-  async getAllUsers(req, res) {
-    try {
-      const users = await userService.getAllUsers();
-      
-      res.status(200).json({
-        message: "Users fetched successfully",
-        data: users
-      });
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+// GET ALL USERS
+export const getAllUsers = async (req, res) => {
+  try {
+    const [users] = await sql.query("SELECT * FROM users ORDER BY id DESC");
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
+};
 
-  async getUserById(req, res) {
-    try {
-      const { user_id } = req.params;
-      const user = await userService.getUserById(user_id);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+// GET USER BY ID
+export const getUserById = async (req, res) => {
+  try {
+    const [user] = await sql.query("SELECT * FROM users WHERE id = ?", [
+      req.params.user_id,
+    ]);
 
-      res.status(200).json({
-        message: "User fetched successfully",
-        data: user
-      });
-    } catch (error) {
-      console.error("Error fetching user by ID:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+    if (user.length === 0)
+      return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ user: user[0] });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
+};
 
-  async updateUser(req, res) {
-    try {
-      const { user_id } = req.params;
-      const { name, email } = req.body;
+// UPDATE USER
+export const updateUser = async (req, res) => {
+  try {
+    const { name, email, role, user_category } = req.body;
 
-      if (!name && !email) {
-        return res.status(400).json({ message: "At least one field (name or email) is required" });
-      }
+    await sql.query(
+      `UPDATE users SET name=?, email=?, role=?, user_category=? WHERE id=?`,
+      [name, email, role, user_category, req.params.user_id]
+    );
 
-      const updatedUser = await userService.updateUser(user_id, req.body);
-      
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.status(200).json({
-        message: "User updated successfully",
-        data: updatedUser
-      });
-    } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(200).json({ message: "User updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
+};
 
-  async deleteUser(req, res) {
-    try {
-      const { user_id } = req.params;
-      const deletedUser = await userService.deleteUser(user_id);
-      
-      if (!deletedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.status(200).json({
-        message: "User deleted successfully",
-        deleted: deletedUser
-      });
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+// DELETE USER
+export const deleteUser = async (req, res) => {
+  try {
+    await sql.query("DELETE FROM users WHERE id=?", [req.params.user_id]);
+    res.status(200).json({ message: "User deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
+};
 
-  async getUserWithRoles(req, res) {
-    try {
-      const { user_id } = req.params;
-      
-      if (!user_id) {
-        return res.status(400).json({ message: "user_id is required" });
-      }
+// GET USER WITH ROLES
+export const getUserWithRoles = async (req, res) => {
+  try {
+    const [user] = await sql.query(
+      "SELECT id, name, email, role, user_category FROM users WHERE id = ?",
+      [req.params.user_id]
+    );
 
-      const userWithRoles = await userService.getUserWithRoles(user_id);
-      
-      if (!userWithRoles) {
-        return res.status(404).json({ message: "User not found" });
-      }
+    if (user.length === 0)
+      return res.status(404).json({ message: "User not found" });
 
-      res.status(200).json({ data: userWithRoles });
-    } catch (error) {
-      console.error("Error fetching user with roles:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(200).json({ user: user[0] });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
-}
+};
 
-export default new UserController();
+// LOGIN USER
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const [rows] = await sql.query(
+      "SELECT * FROM users WHERE email = ? LIMIT 1",
+      [email]
+    );
+
+    if (rows.length === 0)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    const user = rows[0];
+
+    const isMatch = bcrypt.compareSync(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    const token = jwt.sign(
+      {
+        user_id: user.id,
+        role: user.role,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        user_category: user.user_category,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ADMIN SETUP
+export const createAdminSetup = async (req, res) => {
+  try {
+    const [exist] = await sql.query(
+      "SELECT * FROM users WHERE role='admin' LIMIT 1"
+    );
+
+    if (exist.length > 0)
+      return res.status(400).json({ message: "Admin already exists" });
+
+    const hashed = bcrypt.hashSync("Admin@123", 10);
+
+    const [admin] = await sql.query(
+      `INSERT INTO users (name, email, password, role, user_category)
+       VALUES (?, ?, ?, ?, ?)`,
+      ["System Admin", "admin@system.com", hashed, "admin", "admin"]
+    );
+
+    res.status(201).json({
+      message: "Admin created successfully",
+      admin_id: admin.insertId,
+    });
+  } catch (error) {
+    console.error("Admin setup error:", error);
+    res.status(500).json({ message: "Server error creating admin" });
+  }
+};
+
+
+export default {
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  getUserWithRoles,
+  createAdminSetup,
+
+};

@@ -10,9 +10,11 @@ import roleRoutes from './routes/roleRoutes.js';
 import droppingPointRoutes from './routes/droppingPointRoutes.js';
 import priceRoutes from './routes/priceRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import authRoutes from "./routes/authRoutes.js";
+import setupRoutes from "./routes/setupRoutes.js";
 
 // Import middleware
-import { isAdmin } from './middleware/isAdmin.js';
+
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -30,6 +32,9 @@ app.use('/api/user-roles', roleRoutes);
 app.use('/api/dropping-point', droppingPointRoutes);
 app.use('/api/daily-price', priceRoutes);
 app.use('/api/pickup-order', orderRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/setup", setupRoutes);
+
 
 
 

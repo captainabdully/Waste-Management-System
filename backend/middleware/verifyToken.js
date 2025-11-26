@@ -1,28 +1,29 @@
 import jwt from "jsonwebtoken";
 
-export const verifyToken = (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
+class verifyToken { 
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({ message: "Unauthorized. No token provided!" });
-        }
+ async verify(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
 
-        const token = authHeader.split(" ")[1];
+    if (!authHeader)
+      return res.status(401).json({ message: "Unauthorized: Token missing" });
 
-        // Verify token
-        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-            if (err) {
-                return res.status(403).json({ message: "Invalid or expired token" });
-            }
+    const token = authHeader.split(" ")[1];
 
-            // Attach user info from token to request
-            req.user = decoded;  
-            next();
-        });
+    if (!token)
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
 
-    } catch (error) {
-        console.error("Token verification failed:", error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decoded; // attach decoded payload to req.user
+
+    next();
+
+  } catch (error) {
+    console.error("Token verify error:", error);
+    res.status(401).json({ message: "Invalid or expired token" });
+  }
 };
+}
+export default verifyToken;
