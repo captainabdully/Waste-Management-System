@@ -27,7 +27,9 @@ class RoleController {
       
       res.status(200).json({
         message: "All roles fetched successfully",
-        data: roles
+        data: roles,
+        
+      
       });
     } catch (error) {
       console.error("Error fetching roles:", error);

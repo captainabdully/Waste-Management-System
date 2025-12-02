@@ -67,7 +67,10 @@ export const createUser = async (req, res) => {
     res.status(201).json({
       message: "User created successfully",
       user_id: userId,
-      default_role: role
+      name: name,
+      email: email,
+      phone_number: phone_number,
+      default_role: role,
     });
 
   } catch (error) {
@@ -92,7 +95,7 @@ export const getAllUsers = async (req, res) => {
         u.created_at,
         COALESCE(json_agg(ur.user_role) FILTER (WHERE ur.user_role IS NOT NULL), '[]') AS user_roles
       FROM users u
-      LEFT JOIN user_role ur ON u.user_id = ur.user_id
+      LEFT JOIN user_roles ur ON u.user_id = ur.user_id
       GROUP BY u.id, u.user_id, u.name, u.email, u.phone_number, u.created_at
       ORDER BY u.id DESC;
     `;
