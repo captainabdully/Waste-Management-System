@@ -13,6 +13,7 @@ class RoleService {
       RETURNING *
     `;
     
+    
     return result[0];
   }
 

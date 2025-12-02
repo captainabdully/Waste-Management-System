@@ -18,14 +18,19 @@ async function initDB() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
 
+    await sql`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS password TEXT;
+`;
+
     // User roles table
     await sql`CREATE TABLE IF NOT EXISTS user_roles (
       id SERIAL PRIMARY KEY,
       user_id VARCHAR(100) NOT NULL,
-      role VARCHAR(50) NOT NULL CHECK (role IN ('vendor', 'manager', 'admin')),
+      user_role VARCHAR(50) NOT NULL CHECK (user_role IN ('vendor', 'manager', 'admin')),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-      UNIQUE(user_id, role)
+      UNIQUE(user_id, user_role)
     )`;
 
     // Create enum type for categories

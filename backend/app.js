@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 // import swaggerUi from 'swagger-ui-express';
 import { initDB } from './config/db.js';
-// import { verifyToken } from "../middleware/verifyToken.js";
+//  import { verifyToken } from "../middleware/verifyToken.js";
 
 // Import routes
 import userRoutes from './routes/userRoutes.js';

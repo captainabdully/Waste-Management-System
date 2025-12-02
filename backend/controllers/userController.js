@@ -1,192 +1,211 @@
-import { sql } from "../config/db.js";
+
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { sql } from "../config/db.js";
+
+/* ============================================================
+    1. INITIAL ADMIN CREATION (RUN ONCE)
+============================================================ */
+export const createAdminSetup = async (req, res) => {
+  try {
+    const exists = await sql`
+      SELECT * FROM user_roles WHERE user_role = 'admin' LIMIT 1
+    `;
+
+    if (exists.length > 0) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
+
+    const adminId = `USR-${Date.now()}`;
+    const hashedPwd = bcrypt.hashSync("Admin@123", 10);
+
+    await sql`
+      INSERT INTO users (user_id, name, email, phone_number, password, user_category)
+      VALUES (${adminId}, 'System Admin', 'admin@system.com', '0000000000', ${hashedPwd}, 'system')
+    `;
+
+    await sql`
+      INSERT INTO user_roles (user_id, user_role)
+      VALUES (${adminId}, 'admin')
+    `;
+
+    res.status(201).json({ message: "Admin created successfully", user_id: adminId });
+
+  } catch (error) {
+    console.error("Admin setup error:", error);
+    res.status(500).json({ message: "Error creating admin" });
+  }
+};
 
 
-
-
-
-// CREATE USER
+/* ============================================================
+    2. CREATE STANDARD USER (Vendor by default)
+============================================================ */
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, user_category } = req.body;
+    const { name, email, phone_number, password, role = "vendor" } = req.body;
 
-    const [exist] = await sql.query("SELECT * FROM users WHERE email = ?", [
-      email,
-    ]);
+    const exists = await sql`
+      SELECT * FROM users WHERE email = ${email} LIMIT 1
+    `;
 
-    if (exist.length > 0)
+    if (exists.length > 0)
       return res.status(400).json({ message: "Email already exists" });
 
+    const userId = `USR-${Date.now()}`;
     const hashed = bcrypt.hashSync(password, 10);
 
-    const [result] = await sql.query(
-      `INSERT INTO users (name, email, password, role, user_category)
-       VALUES (?, ?, ?, ?, ?)`,
-      [name, email, hashed, role, user_category]
-    );
+    await sql`
+      INSERT INTO users (user_id, name, email, phone_number, password)
+      VALUES (${userId}, ${name}, ${email}, ${phone_number}, ${hashed})
+    `;
+
+    await sql`
+      INSERT INTO user_roles (user_id, user_role)
+      VALUES (${userId}, ${role})
+    `;
 
     res.status(201).json({
       message: "User created successfully",
-      user_id: result.insertId,
+      user_id: userId,
+      default_role: role
     });
+
   } catch (error) {
     console.error("Create user error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// GET ALL USERS
+/* ============================================================
+    3. GET ALL USERS (Admin / Manager)
+    Returns: id, user_id, name, email, phone_number, created_at, roles[]
+============================================================ */
 export const getAllUsers = async (req, res) => {
   try {
-    const [users] = await sql.query("SELECT * FROM users ORDER BY id DESC");
-    res.status(200).json({ users });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// GET USER BY ID
-export const getUserById = async (req, res) => {
-  try {
-    const [user] = await sql.query("SELECT * FROM users WHERE id = ?", [
-      req.params.user_id,
-    ]);
-
-    if (user.length === 0)
-      return res.status(404).json({ message: "User not found" });
-
-    res.status(200).json({ user: user[0] });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// UPDATE USER
-export const updateUser = async (req, res) => {
-  try {
-    const { name, email, role, user_category } = req.body;
-
-    await sql.query(
-      `UPDATE users SET name=?, email=?, role=?, user_category=? WHERE id=?`,
-      [name, email, role, user_category, req.params.user_id]
-    );
-
-    res.status(200).json({ message: "User updated successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// DELETE USER
-export const deleteUser = async (req, res) => {
-  try {
-    await sql.query("DELETE FROM users WHERE id=?", [req.params.user_id]);
-    res.status(200).json({ message: "User deleted" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// GET USER WITH ROLES
-export const getUserWithRoles = async (req, res) => {
-  try {
-    const [user] = await sql.query(
-      "SELECT id, name, email, role, user_category FROM users WHERE id = ?",
-      [req.params.user_id]
-    );
-
-    if (user.length === 0)
-      return res.status(404).json({ message: "User not found" });
-
-    res.status(200).json({ user: user[0] });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// LOGIN USER
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const [rows] = await sql.query(
-      "SELECT * FROM users WHERE email = ? LIMIT 1",
-      [email]
-    );
-
-    if (rows.length === 0)
-      return res.status(400).json({ message: "Invalid email or password" });
-
-    const user = rows[0];
-
-    const isMatch = bcrypt.compareSync(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid email or password" });
-
-    const token = jwt.sign(
-      {
-        user_id: user.id,
-        role: user.role,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const rows = await sql`
+      SELECT 
+        u.id,
+        u.user_id,
+        u.name,
+        u.email,
+        u.phone_number,
+        u.created_at,
+        COALESCE(json_agg(ur.user_role) FILTER (WHERE ur.user_role IS NOT NULL), '[]') AS user_roles
+      FROM users u
+      LEFT JOIN user_role ur ON u.user_id = ur.user_id
+      GROUP BY u.id, u.user_id, u.name, u.email, u.phone_number, u.created_at
+      ORDER BY u.id DESC;
+    `;
 
     res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        user_category: user.user_category,
-      },
+      success: true,
+      users: rows
     });
+
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Get users error:", error);
+    res.status(500).json({ message: "Server error fetching users" });
   }
 };
 
-// ADMIN SETUP
-export const createAdminSetup = async (req, res) => {
+
+
+
+/* ============================================================
+    4. GET SPECIFIC USER (with roles)
+============================================================ */
+export const getUserById = async (req, res) => {
   try {
-    const [exist] = await sql.query(
-      "SELECT * FROM users WHERE role='admin' LIMIT 1"
-    );
+    const { user_id } = req.params;
 
-    if (exist.length > 0)
-      return res.status(400).json({ message: "Admin already exists" });
+    const user = await sql`
+      SELECT * FROM users WHERE user_id = ${user_id} LIMIT 1
+    `;
 
-    const hashed = bcrypt.hashSync("Admin@123", 10);
+    if (user.length === 0)
+      return res.status(404).json({ message: "User not found" });
 
-    const [admin] = await sql.query(
-      `INSERT INTO users (name, email, password, role, user_category)
-       VALUES (?, ?, ?, ?, ?)`,
-      ["System Admin", "admin@system.com", hashed, "admin", "admin"]
-    );
+    const roles = await sql`
+      SELECT user_role FROM user_roles WHERE user_id = ${user_id}
+    `;
 
-    res.status(201).json({
-      message: "Admin created successfully",
-      admin_id: admin.insertId,
+    res.status(200).json({
+      ...user[0],
+      roles: roles.map(r => r.user_role)
     });
+
   } catch (error) {
-    console.error("Admin setup error:", error);
-    res.status(500).json({ message: "Server error creating admin" });
+    console.error("Get user error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
-export default {
-  createUser,
-  getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-  getUserWithRoles,
-  createAdminSetup,
+/* ============================================================
+    5. UPDATE USER INFO
+============================================================ */
+export const updateUser = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const { name, phone_number, user_category } = req.body;
 
+    await sql`
+      UPDATE users SET
+        name = ${name},
+        phone_number = ${phone_number},
+        user_category = ${user_category}
+      WHERE user_id = ${user_id}
+    `;
+
+    res.status(200).json({ message: "User updated successfully" });
+
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/* ============================================================
+    6. UPDATE USER ROLES (Admin only)
+============================================================ */
+export const updateUserRoles = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const { roles } = req.body; // array → ["manager", "vendor"]
+
+    await sql`DELETE FROM user_roles WHERE user_id = ${user_id}`;
+
+    for (const role of roles) {
+      await sql`
+        INSERT INTO user_roles (user_id, user_role)
+        VALUES (${user_id}, ${role})
+      `;
+    }
+
+    res.status(200).json({ message: "Roles updated successfully" });
+
+  } catch (error) {
+    console.error("Role update error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/* ============================================================
+    7. DELETE USER + ROLES
+============================================================ */
+export const deleteUser = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    await sql`DELETE FROM user_roles WHERE user_id = ${user_id}`;
+    await sql`DELETE FROM users WHERE user_id = ${user_id}`;
+
+    res.status(200).json({ message: "User deleted successfully" });
+
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };

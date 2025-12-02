@@ -1,9 +1,9 @@
 import express from "express";
-import userController from "../controllers/userController.js";
+import { createAdminSetup } from "../controllers/userController.js";
 
 const router = express.Router();
 
 // Allow creating first admin without token
-router.post("/admin", userController.createAdminSetup);
+router.post("/admin", createAdminSetup);
 
 export default router;

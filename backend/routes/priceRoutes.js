@@ -1,18 +1,20 @@
 import express from 'express';
 import priceController from '../controllers/priceController.js';
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post('/', priceController.createDailyPrice);
+router.post('/', authMiddleware, allowRoles("admin", "manager"), priceController.createDailyPrice);
 router.get('/today', priceController.getAllTodayPrices);
-router.get('/today/:dropping_point_id', priceController.getTodayPricesByDroppingPoint);
-router.get('/history', priceController.getAllPreviousPrices);
-router.get('/history/:location_id', priceController.getPreviousPricesByLocation);
-router.get("/sort/category", priceController.sortByCategory);
-router.get("/filter/date-range", priceController.filterByDateRange);
-router.get("/last-7-days", priceController.last7Days);
-router.get("/last-30-days", priceController.last30Days);
-router.get("/group-by-date", priceController.groupByDate);
+router.get('/today/:dropping_point_id', authMiddleware, allowRoles("admin", "manager"), priceController.getTodayPricesByDroppingPoint);
+router.get('/history', authMiddleware, allowRoles("admin", "manager"), priceController.getAllPreviousPrices);
+router.get('/history/:location_id', authMiddleware, allowRoles("admin", "manager"), priceController.getPreviousPricesByLocation);
+router.get("/sort/category", authMiddleware, allowRoles("admin", "manager"), priceController.sortByCategory);
+router.get("/filter/date-range",  authMiddleware, allowRoles("admin", "manager"), priceController.filterByDateRange);
+router.get("/last-7-days", authMiddleware, allowRoles("admin", "manager"), priceController.last7Days);
+router.get("/last-30-days", authMiddleware, allowRoles("admin", "manager"), priceController.last30Days);
+router.get("/group-by-date", authMiddleware, allowRoles("admin", "manager"), priceController.groupByDate);
 
 export default router;
 

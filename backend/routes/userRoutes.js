@@ -1,31 +1,3 @@
-// import express from 'express';
-// import userController from '../controllers/userController.js';
-// import { authMiddleware } from "../middleware/authMiddleware.js";
-// import {
-//   createUser,
-//   getAllUsers,
-//   getUserById,
-//   updateUser,
-//   deleteUser,
-//   getUserWithRoles,
-// } from "../controllers/userController.js";
-
-// const router = express.Router();
-
-
-
-// router.post("/setup/admin", userController.createAdminSetup);
-
-// // PROTECTED ROUTES
-// router.post("/", authMiddleware, allowRoles("admin"), createUser);
-// router.get("/", authMiddleware, allowRoles("admin", "manager"), getAllUsers);
-// router.get("/:user_id", authMiddleware, getUserById);
-// router.put("/:user_id", authMiddleware, allowRoles("admin"), updateUser);
-// router.delete("/:user_id", authMiddleware, allowRoles("admin"), deleteUser);
-// router.get("/:user_id/with-roles", authMiddleware, getUserWithRoles);
-
-
-// export default router;
 
 import express from 'express';
 import {
@@ -34,7 +6,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
-  getUserWithRoles,
+  // getUserWithRoles,
   createAdminSetup
 } from '../controllers/userController.js';
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -48,11 +20,11 @@ router.post("/setup/admin", createAdminSetup);
 router.post("/login", login);
 
 // PROTECTED USER ROUTES
-router.post("/", authMiddleware, allowRoles("admin"), createUser);
+router.post("/", createUser);
 router.get("/", authMiddleware, allowRoles("admin","manager"), getAllUsers);
 router.get("/:user_id", authMiddleware, getUserById);
 router.put("/:user_id", authMiddleware, allowRoles("admin"), updateUser);
 router.delete("/:user_id", authMiddleware, allowRoles("admin"), deleteUser);
-router.get("/:user_id/with-roles", authMiddleware, getUserWithRoles);
+// router.get("/:user_id/with-roles", authMiddleware, getUserWithRoles);
 
 export default router;

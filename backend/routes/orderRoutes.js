@@ -1,15 +1,17 @@
 import express from 'express';
 import orderController from '../controllers/orderController.js';
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post('/', orderController.createPickupOrder);
-router.get('/', orderController.getAllOrders);
-router.get('/:vendor_id', orderController.getVendorOrders);
-router.put('/:id/status', orderController.updateOrderStatus);
-router.post('/completion', orderController.recordOrderCompletion);
-router.get('/order/:id', orderController.getOrderById);
-router.get('/history/', orderController.getOrderHistory);
+router.post('/', authMiddleware, allowRoles("vendor"), orderController.createPickupOrder);
+router.get('/', authMiddleware, allowRoles("admin", "manager"), orderController.getAllOrders);
+router.get('/:vendor_id', authMiddleware, allowRoles("admin", "manager"), orderController.getVendorOrders);
+router.put('/:id/status', authMiddleware, allowRoles("admin", "manager", "vendor"), orderController.updateOrderStatus);
+router.post('/completion', authMiddleware, allowRoles("admin", "manager", "vendor"), orderController.recordOrderCompletion);
+router.get('/order/:id', authMiddleware, allowRoles("admin", "manager"), orderController.getOrderById);
+router.get('/history/', authMiddleware, allowRoles("admin", "manager"), orderController.getOrderHistory);
 
 export default router;
 
